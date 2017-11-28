@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+F:\wamp\www>mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2169
+Server version: 5.6.17 MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> create database goods;
+mysql> use goods
+Database changed
+mysql> create table goods(
+-> id int(11) not null auto_increment primary key,
+-> gname varchar(100) not null,
+-> gprice int(11) not null,
+-> cid int(11) not null,
+-> chl varchar(100) not null
+-> )engine=innodb default charset=utf8;
+Query OK, 0 rows affected (2.07 sec)
+
+mysql> create table type(
+-> id int(11) not null auto_increment primary key,
+-> tname varchar(100) not null,
+-> sort int(11) not null
+-> )engine=innodb default charset=utf8;
+Query OK, 0 rows affected (0.91 sec)
+
+mysql> create table list(
+-> id int(11) not null auto_increment primary key,
+-> lcid int(11) not null,
+-> num int(11) not null
+-> )engine=innodb default charset=utf8;
+Query OK, 0 rows affected (0.61 sec)
+
+mysql> insert into goods(gname,gprice,cid,chl)values
+-> ("榴莲",2.4,1,30),("石榴",2.5,1,100),("海苔饼",3,2,200),("虾条",8,2,200),("香皂",12,3,50),("药皂",10,3,100);
+Query OK, 6 rows affected (0.26 sec)
+Enregistrements: 6  Doublons: 0  Avertissements: 0
+
+mysql> insert into type(tname,sort)values
+-> ("水果",1),("零食",2),("生活用品",3);
+Query OK, 3 rows affected (0.12 sec)
+Enregistrements: 3  Doublons: 0  Avertissements: 0
+
+mysql> insert into list(lcid,num)values
+-> (1,20),(2,60),(3,120),(4,100),(5,20),(6,50);
+Query OK, 6 rows affected (0.12 sec)
+Enregistrements: 6  Doublons: 0  Avertissements: 0
+// 1. 查询所有商品的平均价格
+mysql> select avg(gprice) as avgprice from goods;
++----------+
+| avgprice |
++----------+
+|   6.3333 |
++----------+
+1 row in set (0.03 sec)
+//2. 查询某一类型商品的平均价格
+mysql> select tname,avg(gprice) from goods,type where cid=2;
++-------+-------------+
+| tname | avg(gprice) |
++-------+-------------+
+| 水果  |      5.5000 |
++-------+-------------+
+1 row in set (0.02 sec)
+// 3. 查询某个商品的存货价值
+mysql> select gname,gprice*chl from goods where id=4;
++-------+------------+
+| gname | gprice*chl |
++-------+------------+
+| 虾条  |       1600 |
++-------+------------+
+1 row in set (0.09 sec)
+//4. 查询某个订单的金额
+mysql> select gname,gprice*num as total from goods,list where goods.lcid and list.id=3;
+ERROR 1054 (42S22): Champ 'goods.lcid' inconnu dans where clause
+mysql> select gname,gprice*num as total from goods,list where goods.id=list.lcid and list.id=3;
++--------+-------+
+| gname  | total |
++--------+-------+
+| 海苔饼 |   360 |
++--------+-------+
+1 row in set (0.03 sec)
+// 5. 查询价格最低的三个商品
+mysql> select goods.gname,goods.gprice from goods order by goods.gprice limit 0,3;
++--------+--------+
+| gname  | gprice |
++--------+--------+
+| 榴莲   |      2 |
+| 石榴   |      3 |
+| 海苔饼 |      3 |
++--------+--------+
+3 rows in set (0.04 sec)
+//6. 查询最新添加的一个商品
+mysql> select goods.gname,goods.id from goods order by goods.id desc limit 0,1;
++-------+----+
+| gname | id |
++-------+----+
+| 药皂  |  6 |
++-------+----+
+1 row in set (0.00 sec)
+//7. 查询商品的所有信息以及它的类型
+mysql> select goods.*,type.tname from goods,type where goods.cid=type.id;
++----+--------+--------+-----+-----+----------+
+| id | gname  | gprice | cid | chl | tname    |
++----+--------+--------+-----+-----+----------+
+|  1 | 榴莲   |      2 |   1 | 30  | 水果     |
+|  2 | 石榴   |      3 |   1 | 100 | 水果     |
+|  3 | 海苔饼 |      3 |   2 | 200 | 零食     |
+|  4 | 虾条   |      8 |   2 | 200 | 零食     |
+|  5 | 香皂   |     12 |   3 | 50  | 生活用品 |
+|  6 | 药皂   |     10 |   3 | 100 | 生活用品 |
++----+--------+--------+-----+-----+----------+
+6 rows in set (0.00 sec)
+//8. 查询销量最高的三个商品
+mysql> select goods.gname,list.* from goods,list where goods.id=list.lcid order by list.num desc limit 0,3;
++--------+----+------+-----+
+| gname  | id | lcid | num |
++--------+----+------+-----+
+| 海苔饼 |  3 |    3 | 120 |
+| 虾条   |  4 |    4 | 100 |
+| 石榴   |  2 |    2 |  60 |
++--------+----+------+-----+
+3 rows in set (0.00 sec)
+
+
+</body>
+</html>
